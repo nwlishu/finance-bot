@@ -25,12 +25,9 @@ export default function DashboardPage() {
         setDebug(token ? `token: ${token.slice(0, 12)}...` : 'no token')
         setReady(true)
         const apiUrl = process.env.NEXT_PUBLIC_API_URL
-        const t = (window as any).__liff_token__
-        fetch(`${apiUrl}/api/wallets`, {
-          headers: { 'ngrok-skip-browser-warning': 'true', ...(t ? { Authorization: `Bearer ${t}` } : {}) }
-        })
-          .then(r => setFetchTest(`status: ${r.status}`))
-          .catch(e => setFetchTest(`fetch fail: ${e.message}`))
+        fetch(`${apiUrl}/health`)
+          .then(r => setFetchTest(`health: ${r.status}`))
+          .catch(e => setFetchTest(`health fail: ${e.message}`))
       })
       .catch((e) => {
         setDebug(`error: ${e}`)
