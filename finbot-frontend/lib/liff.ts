@@ -24,6 +24,11 @@ export async function initLiff(): Promise<string | null> {
     initialized = true
   }
 
+  if (!liff.isLoggedIn()) {
+    liff.login()
+    return null
+  }
+
   const token = liff.getAccessToken()
   if (token && typeof window !== 'undefined') {
     ;(window as any).__liff_token__ = token
