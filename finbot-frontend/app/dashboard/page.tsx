@@ -16,26 +16,14 @@ function fmt(n: number) {
 
 export default function DashboardPage() {
   const [ready, setReady] = useState(false)
-  const [debug, setDebug] = useState('')
-  const [fetchTest, setFetchTest] = useState('')
 
   useEffect(() => {
     initLiff()
-      .then((token) => {
-        setDebug(token ? `token: ${token.slice(0, 12)}...` : 'no token')
-        setReady(true)
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL
-        fetch(`${apiUrl}/health`)
-          .then(r => setFetchTest(`health: ${r.status}`))
-          .catch(e => setFetchTest(`health fail: ${e.message}`))
-      })
-      .catch((e) => {
-        setDebug(`error: ${e}`)
-        setReady(true)
-      })
+      .then(() => setReady(true))
+      .catch(() => setReady(true))
   }, [])
 
-  const { wallets: realWallets, activeWallet: realActive, switchWallet, error: walletError } = useWallets(ready)
+  const { wallets: realWallets, activeWallet: realActive, switchWallet } = useWallets(ready)
 
   const wallets      = realWallets.length > 0 ? realWallets : MOCK_WALLETS
   const activeWallet = realActive ?? MOCK_WALLETS[0]
@@ -86,15 +74,6 @@ export default function DashboardPage() {
           <div className="w-5 h-px bg-vermilion ml-auto mt-2" />
         </div>
       </header>
-
-      {/* debug — remove after fixing */}
-      <div className="px-6 py-2 bg-ink text-cream font-mono text-[9px] tracking-wider space-y-1">
-        <div>{debug || 'initializing...'}</div>
-        <div>real wallets: {realWallets.length} · real tx: {realTransactions.length}</div>
-        {walletError && <div className="text-vermilion">err: {walletError}</div>}
-        <div>direct fetch: {fetchTest || 'pending...'}</div>
-        <div>api: {process.env.NEXT_PUBLIC_API_URL?.slice(8, 32)}...</div>
-      </div>
 
       {/* ── Wallet Selector ── */}
       <div className="border-y border-cream-border">
