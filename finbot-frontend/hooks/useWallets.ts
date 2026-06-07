@@ -7,6 +7,7 @@ export function useWallets(enabled = true) {
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [activeWallet, setActiveWallet] = useState<Wallet | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchWallets = useCallback(async () => {
     try {
@@ -14,6 +15,8 @@ export function useWallets(enabled = true) {
       setWallets(data)
       setActiveWallet(data.find((w) => w.is_default) ?? data[0] ?? null)
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setError(msg)
       console.error('fetchWallets:', err)
     } finally {
       setLoading(false)
@@ -26,5 +29,5 @@ export function useWallets(enabled = true) {
     setActiveWallet(wallet)
   }, [])
 
-  return { wallets, activeWallet, switchWallet, loading, refetch: fetchWallets }
+  return { wallets, activeWallet, switchWallet, loading, error, refetch: fetchWallets }
 }

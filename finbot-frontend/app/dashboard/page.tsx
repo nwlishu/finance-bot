@@ -30,7 +30,7 @@ export default function DashboardPage() {
       })
   }, [])
 
-  const { wallets: realWallets, activeWallet: realActive, switchWallet } = useWallets(ready)
+  const { wallets: realWallets, activeWallet: realActive, switchWallet, error: walletError } = useWallets(ready)
 
   const wallets      = realWallets.length > 0 ? realWallets : MOCK_WALLETS
   const activeWallet = realActive ?? MOCK_WALLETS[0]
@@ -86,6 +86,7 @@ export default function DashboardPage() {
       <div className="px-6 py-2 bg-ink text-cream font-mono text-[9px] tracking-wider space-y-1">
         <div>{debug || 'initializing...'}</div>
         <div>real wallets: {realWallets.length} · real tx: {realTransactions.length}</div>
+        {walletError && <div className="text-vermilion">err: {walletError}</div>}
         <div>api: {process.env.NEXT_PUBLIC_API_URL?.slice(8, 32)}...</div>
       </div>
 
