@@ -1,4 +1,6 @@
 'use client'
+import { useEffect, useState } from 'react'
+import { initLiff } from '@/lib/liff'
 import { useWallets } from '@/hooks/useWallets'
 import { useSummary } from '@/hooks/useSummary'
 import { useTransactions } from '@/hooks/useTransactions'
@@ -8,16 +10,20 @@ import { MonthlyBarChart } from '@/components/charts/MonthlyBarChart'
 import { CategoryBreakdown } from '@/components/charts/CategoryPieChart'
 import { MOCK_WALLETS, MOCK_MONTHLY, MOCK_BY_CATEGORY, MOCK_TRANSACTIONS } from '@/lib/mockData'
 
-// LIFF auth commented out for UI design — re-enable before going live
-// import { useEffect, useState } from 'react'
-// import { initLiff } from '@/lib/liff'
-
 function fmt(n: number) {
   return n.toLocaleString('en-US', { maximumFractionDigits: 0 })
 }
 
 export default function DashboardPage() {
-  const { wallets: realWallets, activeWallet: realActive, switchWallet } = useWallets()
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    initLiff()
+      .then(() => setReady(true))
+      .catch(() => setReady(true))
+  }, [])
+
+  const { wallets: realWallets, activeWallet: realActive, switchWallet } = useWallets(ready)
 
   const wallets      = realWallets.length > 0 ? realWallets : MOCK_WALLETS
   const activeWallet = realActive ?? MOCK_WALLETS[0]
@@ -37,6 +43,17 @@ export default function DashboardPage() {
   const now = new Date()
   const monthLabel = now.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
   const yearLabel  = now.getFullYear()
+
+  if (!ready) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-cream">
+        <div className="text-center">
+          <div className="w-6 h-6 border-2 border-ink border-t-vermilion rounded-full animate-spin mx-auto mb-3" />
+          <p className="font-mono text-[10px] tracking-widest text-ink-muted">LOADING...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <main className="min-h-screen grid-paper max-w-lg mx-auto">
