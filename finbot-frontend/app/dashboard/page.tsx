@@ -83,8 +83,10 @@ export default function DashboardPage() {
       </header>
 
       {/* debug — remove after fixing */}
-      <div className="px-6 py-2 bg-ink text-cream font-mono text-[9px] tracking-wider">
-        {debug || 'initializing...'} · api: {process.env.NEXT_PUBLIC_API_URL?.slice(8, 30)}...
+      <div className="px-6 py-2 bg-ink text-cream font-mono text-[9px] tracking-wider space-y-1">
+        <div>{debug || 'initializing...'}</div>
+        <div>real wallets: {realWallets.length} · real tx: {realTransactions.length}</div>
+        <div>api: {process.env.NEXT_PUBLIC_API_URL?.slice(8, 32)}...</div>
       </div>
 
       {/* ── Wallet Selector ── */}
