@@ -59,40 +59,38 @@ func LineUserIDFromContext(ctx context.Context) string {
 }
 
 func verifyLINEToken(ctx context.Context, token string) (lineUserID, displayName, pictureURL string, err error) {
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet,
+	// Step 1: verify token is valid
+	verifyReq, _ := http.NewRequestWithContext(ctx, http.MethodGet,
 		fmt.Sprintf("https://api.line.me/oauth2/v2.1/verify?access_token=%s", token), nil)
-
-	resp, err := http.DefaultClient.Do(req)
+	verifyResp, err := http.DefaultClient.Do(verifyReq)
 	if err != nil {
 		return "", "", "", fmt.Errorf("LINE verify request: %w", err)
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", "", "", fmt.Errorf("LINE verify status: %d", resp.StatusCode)
+	verifyResp.Body.Close()
+	if verifyResp.StatusCode != http.StatusOK {
+		return "", "", "", fmt.Errorf("LINE verify status: %d", verifyResp.StatusCode)
 	}
 
-	var result struct {
-		Sub string `json:"sub"` // LINE user ID
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil || result.Sub == "" {
-		return "", "", "", fmt.Errorf("invalid LINE verify response")
-	}
-
-	// Fetch user profile with the access token
+	// Step 2: get userId + profile from profile endpoint
 	profileReq, _ := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.line.me/v2/profile", nil)
 	profileReq.Header.Set("Authorization", "Bearer "+token)
 	profileResp, err := http.DefaultClient.Do(profileReq)
-	if err == nil && profileResp.StatusCode == http.StatusOK {
-		defer profileResp.Body.Close()
-		var profile struct {
-			DisplayName string `json:"displayName"`
-			PictureURL  string `json:"pictureUrl"`
-		}
-		json.NewDecoder(profileResp.Body).Decode(&profile)
-		displayName = profile.DisplayName
-		pictureURL = profile.PictureURL
+	if err != nil {
+		return "", "", "", fmt.Errorf("LINE profile request: %w", err)
+	}
+	defer profileResp.Body.Close()
+	if profileResp.StatusCode != http.StatusOK {
+		return "", "", "", fmt.Errorf("LINE profile status: %d", profileResp.StatusCode)
 	}
 
-	return result.Sub, displayName, pictureURL, nil
+	var profile struct {
+		UserID      string `json:"userId"`
+		DisplayName string `json:"displayName"`
+		PictureURL  string `json:"pictureUrl"`
+	}
+	if err := json.NewDecoder(profileResp.Body).Decode(&profile); err != nil || profile.UserID == "" {
+		return "", "", "", fmt.Errorf("invalid LINE profile response")
+	}
+
+	return profile.UserID, profile.DisplayName, profile.PictureURL, nil
 }
