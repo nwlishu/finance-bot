@@ -17,12 +17,20 @@ function fmt(n: number) {
 export default function DashboardPage() {
   const [ready, setReady] = useState(false)
   const [debug, setDebug] = useState('')
+  const [fetchTest, setFetchTest] = useState('')
 
   useEffect(() => {
     initLiff()
       .then((token) => {
         setDebug(token ? `token: ${token.slice(0, 12)}...` : 'no token')
         setReady(true)
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL
+        const t = (window as any).__liff_token__
+        fetch(`${apiUrl}/api/wallets`, {
+          headers: { 'ngrok-skip-browser-warning': 'true', ...(t ? { Authorization: `Bearer ${t}` } : {}) }
+        })
+          .then(r => setFetchTest(`status: ${r.status}`))
+          .catch(e => setFetchTest(`fetch fail: ${e.message}`))
       })
       .catch((e) => {
         setDebug(`error: ${e}`)
@@ -87,6 +95,7 @@ export default function DashboardPage() {
         <div>{debug || 'initializing...'}</div>
         <div>real wallets: {realWallets.length} · real tx: {realTransactions.length}</div>
         {walletError && <div className="text-vermilion">err: {walletError}</div>}
+        <div>direct fetch: {fetchTest || 'pending...'}</div>
         <div>api: {process.env.NEXT_PUBLIC_API_URL?.slice(8, 32)}...</div>
       </div>
 
