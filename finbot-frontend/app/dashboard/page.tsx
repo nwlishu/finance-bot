@@ -16,11 +16,18 @@ function fmt(n: number) {
 
 export default function DashboardPage() {
   const [ready, setReady] = useState(false)
+  const [debug, setDebug] = useState('')
 
   useEffect(() => {
     initLiff()
-      .then(() => setReady(true))
-      .catch(() => setReady(true))
+      .then((token) => {
+        setDebug(token ? `token: ${token.slice(0, 12)}...` : 'no token')
+        setReady(true)
+      })
+      .catch((e) => {
+        setDebug(`error: ${e}`)
+        setReady(true)
+      })
   }, [])
 
   const { wallets: realWallets, activeWallet: realActive, switchWallet } = useWallets(ready)
@@ -74,6 +81,11 @@ export default function DashboardPage() {
           <div className="w-5 h-px bg-vermilion ml-auto mt-2" />
         </div>
       </header>
+
+      {/* debug — remove after fixing */}
+      <div className="px-6 py-2 bg-ink text-cream font-mono text-[9px] tracking-wider">
+        {debug || 'initializing...'} · api: {process.env.NEXT_PUBLIC_API_URL?.slice(8, 30)}...
+      </div>
 
       {/* ── Wallet Selector ── */}
       <div className="border-y border-cream-border">
