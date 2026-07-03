@@ -14,56 +14,50 @@ export function MonthlyBarChart({ data }: Props) {
   }))
 
   if (chartData.length === 0) {
-    return (
-      <div className="p-8 text-center">
-        <p className="font-mono text-xs text-ink-muted">// no data</p>
-      </div>
-    )
+    return <p className="text-sm text-gray-400 text-center py-6">No data</p>
   }
 
   return (
     <div>
       <ResponsiveContainer width="100%" height={160}>
         <BarChart data={chartData} barCategoryGap="40%" barGap={2}>
-          <CartesianGrid
-            strokeDasharray="2 4"
-            stroke="rgba(180,155,120,0.2)"
-            vertical={false}
-          />
+          <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
           <XAxis
             dataKey="date"
-            tick={{ fontSize: 9, fontFamily: 'var(--font-geist-mono)', fill: '#9C8E7E' }}
-            axisLine={{ stroke: '#D4C9B4', strokeWidth: 0.5 }}
+            tick={{ fontSize: 10, fontFamily: 'system-ui', fill: '#9CA3AF' }}
+            axisLine={false}
             tickLine={false}
           />
           <YAxis
-            tick={{ fontSize: 9, fontFamily: 'var(--font-geist-mono)', fill: '#9C8E7E' }}
+            tick={{ fontSize: 10, fontFamily: 'system-ui', fill: '#9CA3AF' }}
             axisLine={false}
             tickLine={false}
-            width={38}
+            width={36}
             tickFormatter={(v) => v >= 1000 ? `${v / 1000}k` : v}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#F5F0E8',
-              border: '0.5px solid #D4C9B4',
-              borderRadius: 0,
-              fontFamily: 'var(--font-geist-mono)',
-              fontSize: 11,
-              color: '#1A1410',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #F3F4F6',
+              borderRadius: 8,
+              fontFamily: 'system-ui',
+              fontSize: 12,
+              color: '#111827',
+              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
             }}
-            formatter={(v, name) => [Number(v).toLocaleString('en-US'), String(name)]}
+            formatter={(v, name) => [`฿${Number(v).toLocaleString('en-US')}`, String(name)]}
           />
-          <Bar dataKey="income" fill="#1A5C3A" radius={0} name="income" />
-          <Bar dataKey="expense" fill="#CC3300" radius={0} name="expense" />
+          <Bar dataKey="income" fill="#22C55E" radius={[3, 3, 0, 0]} name="Income" />
+          <Bar dataKey="expense" fill="#EF4444" radius={[3, 3, 0, 0]} name="Expense" />
         </BarChart>
       </ResponsiveContainer>
-      <div className="flex gap-4 mt-2 justify-end">
-        <span className="font-mono text-[9px] text-ink-muted flex items-center gap-1.5">
-          <span className="inline-block w-2 h-2 bg-ledger-green" />income
+
+      <div className="flex gap-4 mt-1 justify-end">
+        <span className="text-xs text-gray-400 flex items-center gap-1.5">
+          <span className="inline-block w-2.5 h-2.5 rounded-sm bg-green-500" />Income
         </span>
-        <span className="font-mono text-[9px] text-ink-muted flex items-center gap-1.5">
-          <span className="inline-block w-2 h-2 bg-vermilion" />expense
+        <span className="text-xs text-gray-400 flex items-center gap-1.5">
+          <span className="inline-block w-2.5 h-2.5 rounded-sm bg-red-500" />Expense
         </span>
       </div>
     </div>

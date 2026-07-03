@@ -1,17 +1,22 @@
 'use client'
 import type { Transaction } from '@/types/finance'
 
-const CAT_CODE: Record<string, string> = {
-  food: 'FOOD',
-  transport: 'TRNSP',
-  shopping: 'SHOP',
-  entertainment: 'ENT',
-  health: 'HLTH',
-  salary: 'SAL',
-  freelance: 'FREE',
-  utilities: 'UTIL',
-  rent: 'RENT',
-  other: 'MISC',
+const CAT_NAME: Record<string, string> = {
+  food: 'Food',
+  transport: 'Transport',
+  shopping: 'Shopping',
+  entertainment: 'Entertainment',
+  health: 'Health',
+  salary: 'Salary',
+  freelance: 'Freelance',
+  utilities: 'Utilities',
+  rent: 'Rent',
+  other: 'Other',
+}
+
+function formatDate(dateStr?: string) {
+  if (!dateStr) return ''
+  return new Date(dateStr).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 
 interface Props {
@@ -20,49 +25,42 @@ interface Props {
 }
 
 export function RecentTransactions({ transactions, onDelete }: Props) {
+  if (transactions.length === 0) {
+    return <p className="text-sm text-gray-400 text-center py-8">No transactions yet</p>
+  }
+
   return (
-    <div>
-      {/* Table header */}
-      <div className="grid grid-cols-[52px_1fr_auto] gap-3 px-4 py-2 bg-cream-dark border-b border-cream-border">
-        <span className="font-mono text-[8px] tracking-[0.3em] text-ink-muted uppercase">Cat</span>
-        <span className="font-mono text-[8px] tracking-[0.3em] text-ink-muted uppercase">Description</span>
-        <span className="font-mono text-[8px] tracking-[0.3em] text-ink-muted uppercase text-right">Amount</span>
-      </div>
+    <ul>
+      {transactions.map((t) => (
+        <li
+          key={t.id}
+          className="flex items-center justify-between px-4 py-3 border-b border-gray-50 last:border-0 group"
+        >
+          <div className="flex-1 min-w-0 mr-3">
+            <p className="text-sm text-gray-800 truncate">
+              {t.note || CAT_NAME[t.category] || t.category}
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">{formatDate(t.transaction_date)}</p>
+          </div>
 
-      {transactions.length === 0 && (
-        <p className="font-mono text-[11px] text-ink-muted text-center py-10">
-          // no entries yet
-        </p>
-      )}
-
-      <ul className="divide-y divide-cream-border">
-        {transactions.map((t) => (
-          <li key={t.id} className="grid grid-cols-[52px_1fr_auto] gap-3 items-center px-4 py-3 group hover:bg-cream-dark transition-colors">
-            <span className="font-mono text-[8px] tracking-wider text-ink-muted bg-cream-dark px-1.5 py-0.5 text-center border border-cream-border">
-              {CAT_CODE[t.category] ?? 'MISC'}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className={`text-sm font-semibold font-mono tabular-nums ${
+              t.type === 'income' ? 'text-emerald-600' : 'text-red-500'
+            }`}>
+              {t.type === 'income' ? '+' : '−'}฿{t.amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}
             </span>
-            <div className="min-w-0">
-              <p className="font-mono text-xs text-ink truncate">{t.note || t.category}</p>
-              <p className="font-mono text-[9px] text-ink-muted mt-0.5">{t.transaction_date?.slice(0, 10)}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={`font-mono text-sm font-bold tabular-nums ${
-                t.type === 'income' ? 'text-ledger-green' : 'text-vermilion'
-              }`}>
-                {t.type === 'income' ? '+' : '−'}{t.amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}
-              </span>
-              {onDelete && (
-                <button
-                  onClick={() => onDelete(t.id)}
-                  className="font-mono text-cream-border hover:text-vermilion text-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+            {onDelete && (
+              <button
+                onClick={() => onDelete(t.id)}
+                className="w-5 h-5 rounded-full bg-red-50 text-red-400 text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-100"
+                aria-label="Delete"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
   )
 }

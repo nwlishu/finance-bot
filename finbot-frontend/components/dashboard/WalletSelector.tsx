@@ -10,20 +10,17 @@ interface Props {
 export function WalletSelector({ wallets, active, onChange }: Props) {
   if (wallets.length === 0) return null
   return (
-    <div className="flex border border-cream-border overflow-hidden divide-x divide-cream-border">
+    <div className="flex gap-2 px-4 py-3 overflow-x-auto">
       {wallets.map((w) => (
         <button
           key={w.id}
           onClick={() => onChange(w)}
-          className={`flex-1 px-4 py-2.5 font-mono text-xs tracking-wider transition-colors text-left ${
+          className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
             active?.id === w.id
-              ? 'bg-ink text-cream'
-              : 'bg-transparent text-ink-light hover:bg-cream-dark'
+              ? 'bg-[#1E3560] text-white shadow-sm'
+              : 'bg-white text-gray-500 border border-gray-200'
           }`}
         >
-          <span className={`mr-1.5 ${active?.id === w.id ? 'text-vermilion' : 'text-cream-deep'}`}>
-            {active?.id === w.id ? '▶' : '○'}
-          </span>
           {w.name}
         </button>
       ))}

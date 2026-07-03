@@ -8,10 +8,32 @@ import { WalletSelector } from '@/components/dashboard/WalletSelector'
 import { RecentTransactions } from '@/components/dashboard/RecentTransactions'
 import { MonthlyBarChart } from '@/components/charts/MonthlyBarChart'
 import { CategoryBreakdown } from '@/components/charts/CategoryPieChart'
+import { BottomNav } from '@/components/layout/BottomNav'
 import { MOCK_WALLETS, MOCK_MONTHLY, MOCK_BY_CATEGORY, MOCK_TRANSACTIONS } from '@/lib/mockData'
+import type { Transaction } from '@/types/finance'
 
 function fmt(n: number) {
   return n.toLocaleString('en-US', { maximumFractionDigits: 0 })
+}
+
+function MiniList({ items, type }: { items: Transaction[]; type: 'income' | 'expense' }) {
+  if (items.length === 0) return null
+  return (
+    <div className="mt-2.5 space-y-1.5">
+      {items.map((t) => (
+        <div key={t.id} className="flex justify-between items-center">
+          <span className="text-[11px] text-gray-500 truncate mr-1 max-w-[80px]">
+            {t.note || t.category}
+          </span>
+          <span className={`text-[11px] font-semibold font-mono tabular-nums flex-shrink-0 ${
+            type === 'income' ? 'text-gray-600' : 'text-red-500'
+          }`}>
+            {fmt(t.amount)}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 export default function DashboardPage() {
@@ -38,113 +60,136 @@ export default function DashboardPage() {
   const income  = monthly.total_income
   const expense = monthly.total_expense
   const net     = monthly.net
-  const currency = activeWallet?.currency ?? 'THB'
 
-  const now = new Date()
-  const monthLabel = now.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
+  const incomeItems  = transactions.filter(t => t.type === 'income').slice(0, 3)
+  const expenseItems = transactions.filter(t => t.type === 'expense').slice(0, 3)
+  const spentPct     = income > 0 ? Math.min(100, Math.round((expense / income) * 100)) : 0
+
+  const now        = new Date()
+  const monthLabel = now.toLocaleDateString('en-US', { month: 'long' })
   const yearLabel  = now.getFullYear()
 
   if (!ready) {
     return (
-      <div className="flex h-screen items-center justify-center bg-cream">
+      <div className="flex h-screen items-center justify-center bg-[#E8EFF9]">
         <div className="text-center">
-          <div className="w-6 h-6 border-2 border-ink border-t-vermilion rounded-full animate-spin mx-auto mb-3" />
-          <p className="font-mono text-[10px] tracking-widest text-ink-muted">LOADING...</p>
+          <div className="w-8 h-8 border-2 border-blue-100 border-t-blue-600 rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-gray-400">Loading...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <main className="min-h-screen grid-paper max-w-lg mx-auto">
+    <main className="min-h-screen bg-[#E8EFF9] max-w-lg mx-auto pb-28">
 
       {/* ── Header ── */}
-      <header className="px-6 pt-12 pb-6 flex items-start justify-between">
-        <div>
-          <p className="font-mono text-[8px] tracking-[0.4em] text-ink-muted uppercase mb-3">
-            Personal Finance
-          </p>
-          <h1 className="font-display text-[2.6rem] font-bold text-ink leading-[0.88] tracking-tight">
-            Finance<br />Ledger
-          </h1>
-        </div>
-        <div className="text-right mt-1 shrink-0">
-          <p className="font-mono text-[10px] font-bold text-vermilion tracking-widest">{monthLabel}</p>
-          <p className="font-mono text-[10px] text-ink-muted tracking-widest">{yearLabel}</p>
-          <div className="w-5 h-px bg-vermilion ml-auto mt-2" />
-        </div>
-      </header>
+      <div className="pt-12 pb-4 px-4 text-center">
+        <h1 className="text-2xl font-bold text-gray-900">My Finances</h1>
+        <div className="h-px bg-gray-300 mt-3" />
+      </div>
 
       {/* ── Wallet Selector ── */}
-      <div className="border-y border-cream-border">
-        <WalletSelector wallets={wallets} active={activeWallet} onChange={switchWallet} />
-      </div>
+      <WalletSelector wallets={wallets} active={activeWallet} onChange={switchWallet} />
 
-      {/* ── Hero Balance ── */}
-      <div className="px-6 pt-8 pb-7 border-b border-cream-border">
-        <p className="font-mono text-[8px] tracking-[0.45em] text-ink-muted uppercase mb-5">
-          Net Balance
-        </p>
-        <p className={`font-display text-6xl font-bold leading-none tracking-tight ${net >= 0 ? 'text-ink' : 'text-vermilion'}`}>
-          {net >= 0 ? '+' : '−'}{fmt(Math.abs(net))}
-        </p>
-        <div className="flex items-center gap-2 mt-4">
-          <span className="font-mono text-[10px] text-ink-muted">{currency}</span>
-          <span className="text-cream-deep">·</span>
-          <span className="font-mono text-[10px] text-ink-muted">{activeWallet?.name}</span>
-        </div>
-      </div>
+      {/* ── 2×2 Summary Cards ── */}
+      <div className="px-4 grid grid-cols-2 gap-3">
 
-      {/* ── Income / Expense ── */}
-      <div className="grid grid-cols-2 divide-x divide-cream-border border-b border-cream-border">
-        <div className="px-6 py-5">
-          <p className="font-mono text-[8px] tracking-[0.4em] text-ink-muted uppercase mb-3">Income</p>
-          <p className="font-mono text-2xl font-bold text-ledger-green tabular-nums">
-            +{fmt(income)}
+        {/* Income */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <p className="font-bold text-sm text-gray-900">Income</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">{monthLabel} {yearLabel}</p>
+          <p className="text-2xl font-bold text-emerald-500 mt-2 font-mono tabular-nums leading-none">
+            {fmt(income)}
           </p>
-          <p className="font-mono text-[9px] text-ink-muted mt-1.5">{currency}</p>
+          <MiniList items={incomeItems} type="income" />
         </div>
-        <div className="px-6 py-5">
-          <p className="font-mono text-[8px] tracking-[0.4em] text-ink-muted uppercase mb-3">Expense</p>
-          <p className="font-mono text-2xl font-bold text-vermilion tabular-nums">
-            −{fmt(expense)}
+
+        {/* Expenses */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <p className="font-bold text-sm text-gray-900">Expenses</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">{monthLabel} {yearLabel}</p>
+          <p className="text-2xl font-bold text-red-500 mt-2 font-mono tabular-nums leading-none">
+            {fmt(expense)}
           </p>
-          <p className="font-mono text-[9px] text-ink-muted mt-1.5">{currency}</p>
+          <MiniList items={expenseItems} type="expense" />
         </div>
+
+        {/* Balance */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <p className="font-bold text-sm text-gray-900">Balance</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">{monthLabel} {yearLabel}</p>
+          <p className={`text-2xl font-bold mt-2 font-mono tabular-nums leading-none ${
+            net >= 0 ? 'text-gray-900' : 'text-red-500'
+          }`}>
+            {fmt(net)}
+          </p>
+          <div className="mt-3">
+            <div className="flex justify-between text-[11px] mb-1.5">
+              <span className="text-gray-500">Spent</span>
+              <span className="text-blue-500 font-medium">{spentPct}%</span>
+            </div>
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full bg-blue-500 transition-all"
+                style={{ width: `${spentPct}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* This Month Summary */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <p className="font-bold text-sm text-gray-900">This Month</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">Summary</p>
+          <div className="mt-3 space-y-2">
+            <div className="flex justify-between text-[11px]">
+              <span className="text-gray-500">Income</span>
+              <span className="font-semibold font-mono text-gray-700 tabular-nums">{fmt(income)}</span>
+            </div>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-gray-500">Expense</span>
+              <span className="font-semibold font-mono text-red-500 tabular-nums">{fmt(expense)}</span>
+            </div>
+            <div className="h-px bg-gray-100" />
+            <div className="flex justify-between text-[11px]">
+              <span className="font-semibold text-gray-700">Balance</span>
+              <span className={`font-bold font-mono tabular-nums ${net >= 0 ? 'text-gray-900' : 'text-red-500'}`}>
+                {fmt(net)}
+              </span>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      {/* ── Daily Flow ── */}
-      <SectionHeader label="Daily Flow" meta={`${monthLabel} ${yearLabel}`} />
-      <div className="px-4 py-4 border-b border-cream-border">
-        <MonthlyBarChart data={monthly?.daily_totals} />
-      </div>
-
-      {/* ── Category Breakdown ── */}
-      <SectionHeader label="By Category" meta={`${byCategory.length} cats`} />
-      <div className="border-b border-cream-border">
+      {/* ── Spending Budget ── */}
+      <div className="mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm">
+        <p className="font-bold text-sm text-gray-900 mb-4">Spending Budget</p>
         <CategoryBreakdown data={byCategory} />
       </div>
 
-      {/* ── Recent Entries ── */}
-      <SectionHeader label="Recent Entries" meta={`${transactions.length} items`} />
-      <div className="border-b border-cream-border">
+      {/* ── Daily Flow ── */}
+      <div className="mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <p className="font-bold text-sm text-gray-900">Daily Flow</p>
+          <span className="text-xs text-gray-400">{monthLabel} {yearLabel}</span>
+        </div>
+        <MonthlyBarChart data={monthly?.daily_totals} />
+      </div>
+
+      {/* ── Recent Transactions ── */}
+      <div className="mx-4 mt-3 bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <p className="font-bold text-sm text-gray-900">Recent Transactions</p>
+          <span className="text-xs text-gray-400">{transactions.length} items</span>
+        </div>
         <RecentTransactions transactions={transactions} onDelete={remove} />
       </div>
 
-      {/* ── Footer ── */}
-      <p className="font-mono text-center text-[10px] text-ink-muted py-8 tracking-wider">
-        // log via LINE → &quot;ข้าว 50&quot; · &quot;เงินเดือน 30000&quot;
-      </p>
+      {/* ── Bottom Navigation ── */}
+      <BottomNav active="dashboard" />
 
     </main>
-  )
-}
-
-function SectionHeader({ label, meta }: { label: string; meta?: string }) {
-  return (
-    <div className="flex items-center justify-between px-6 py-2.5 border-b border-cream-border bg-cream-dark">
-      <span className="font-mono text-[8px] tracking-[0.35em] text-ink-muted uppercase">{label}</span>
-      {meta && <span className="font-mono text-[8px] text-ink-muted">{meta}</span>}
-    </div>
   )
 }
